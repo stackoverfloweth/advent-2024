@@ -1,0 +1,31 @@
+{
+  "name": "advent-2024",
+  "type": "module",
+  "version": "1.0.0",
+  "private": false,
+  "author": "@stackoverfloweth",
+  "license": "ISC",
+  "description": "Typescript solutions for https://adventofcode.com/2024/",
+  "main": "main.ts",
+  "scripts": {
+    "test": "vitest src",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stackoverfloweth/advent-2024.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stackoverfloweth/advent-2024/issues"
+  },
+  "homepage": "https://github.com/stackoverfloweth/advent-2024#readme",
+  "dependencies": {
+    "@kitbag/eslint-config": "^1.0.2",
+    "eslint": "9.16.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.1",
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.6"
+  }
+}
