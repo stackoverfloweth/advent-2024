@@ -61,27 +61,23 @@ function findCenterPage(manual: Manual): number {
 }
 
 function sortPages(manual: Manual, rules: Rule[]): Manual {
-  const left = []
-  const right = []
-  const resultArray: Manual = []
-
   const pivot = manual.shift()
 
   if (pivot === undefined) {
-    return resultArray
+    return []
   }
 
-  for (const page of manual) {
-    // const diff =
-
+  const [left, right] = manual.reduce<[Manual, Manual]>(([left, right], page) => {
     if (compare(page, pivot, rules) < 0) {
       left.push(page)
     } else {
       right.push(page)
     }
-  };
 
-  return resultArray.concat(sortPages(left, rules), pivot, sortPages(right, rules))
+    return [left, right]
+  }, [[], []])
+
+  return [...sortPages(left, rules), pivot, ...sortPages(right, rules)]
 }
 
 function compare(page: number, pivot: number, rules: Rule[]): number {
