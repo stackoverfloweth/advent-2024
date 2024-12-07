@@ -1,78 +1,47 @@
 type Location = { x: number, y: number, value: string }
-type Map = Location[][]
 const obstruction = '#'
 const guard = ['^', '>', 'v', '<'] as const
 type Guard = Location & { value: typeof guard[number] }
 
-class GuardHistory {
-  private readonly history = new Set<string>()
+const overflows = new Set<string>()
 
-  public add(guard: Guard): void {
-    const key = this.getKey(guard)
-
-    this.history.add(key)
-  }
-
-  public has(guard?: Guard): boolean {
-    if (!guard) {
-      return false
-    }
-
-    const key = this.getKey(guard)
-
-    return this.history.has(key)
-  }
-
-  public get size(): number {
-    return this.history.size
-  }
-
-  public forEach(callbackfn: (value: string, value2: string, set: Set<string>) => void): void {
-    this.history.forEach(callbackfn)
-  }
-
-  private getKey(guard?: Guard): string {
-    if (!guard) {
-      return ''
-    }
-
-    const { x, y, value } = guard
-
-    return JSON.stringify({ x, y, value })
+class LoopError extends Error {
+  public constructor() {
+    super('Loop Detected!')
   }
 }
 
-const overflows = new GuardHistory()
-
 export function solve(input: string): unknown {
   const map = getMap(input)
-  const locationsVisited = exploreMap(map)
+  const visited = exploreMap(map)
 
-  locationsVisited.forEach((visited) => {
-    const { x, y }: Location = JSON.parse(visited)
-    const modifiedMap = updateMap(getMap(input), { x, y }, obstruction)
+  visited.forEach(({ x, y }) => {
+    const modifiedMap = getMap(input)
+    const newObstruction: Location = { x, y, value: obstruction }
+    modifiedMap.set(getLocationKey(newObstruction), newObstruction)
 
     try {
-      console.log(printMap(modifiedMap) + '\n')
       exploreMap(modifiedMap)
-    } catch {
-      overflows.add({ x, y, value: '^' })
+    } catch (error) {
+      if (error instanceof LoopError) {
+        overflows.add(getLocationKey(newObstruction))
+      }
     }
   })
 
   return overflows.size
 }
 
-function exploreMap(map: Map): GuardHistory {
-  const locationsVisited = new GuardHistory()
+export function exploreMap(map: Map<string, Location>): Map<string, Location> {
+  const locationsVisited = new Map<string, Location>()
   let guard = findGuard(map)
 
   while (guard !== undefined) {
-    locationsVisited.add(guard)
-    const newGuard = step(map, guard)
+    locationsVisited.set(getGuardKey(guard), guard)
+    const newGuard = stepOrTurn(map, guard)
 
-    if (locationsVisited.has(newGuard)) {
-      throw new Error('Overflow Exception!')
+    if (!!newGuard && locationsVisited.has(getGuardKey(newGuard))) {
+      throw new LoopError()
     }
 
     guard = newGuard
@@ -81,79 +50,61 @@ function exploreMap(map: Map): GuardHistory {
   return locationsVisited
 }
 
-function getMap(input: string): Map {
-  return input.split('\n').map((line, y) => line.split('').map((value, x) => {
-    return { x, y, value }
-  }))
+export function getMap(input: string): Map<string, Location> {
+  const map = new Map<string, Location>()
+
+  input.split('\n').forEach((line, y) => {
+    line.split('').forEach((value, x) => {
+      map.set(getLocationKey({ x, y }), { x, y, value })
+    })
+  })
+
+  return map
 }
 
-function getMapLocation(map: Map, x: number, y: number): Location | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (map[y] === undefined) {
-    return undefined
-  }
-
-  return map[y][x]
-}
-
-function updateMap(map: Map, { x, y }: Pick<Location, 'x' | 'y'>, value: string): Map {
-  return map.map((line) => line.map((location) => {
-    if (location.x === x && location.y === y) {
-      return { ...location, value }
-    }
-
-    return location
-  }))
-}
-
-function printMap(map: Map): string {
-  return map.map((line) => line.map((location) => location.value).join(' ')).join('\n')
+function getMapLocation(map: Map<string, Location>, { x, y }: Pick<Location, 'x' | 'y'>): Location | undefined {
+  return map.get(getLocationKey({ x, y }))
 }
 
 function isGuard(location: Location): location is Guard {
   return guard.includes(location.value as Guard['value'])
 }
 
-function findGuard(map: Map): Guard | undefined {
-  const guardLocation = map
-    .flatMap((line) => line)
-    .find(isGuard)
-
-  return guardLocation
+function findGuard(map: Map<string, Location>): Guard | undefined {
+  return Array.from(map.values()).find(isGuard)
 }
 
-function step(map: Map, guard: Guard): Guard | undefined {
+function stepOrTurn(map: Map<string, Location>, guard: Guard): Guard | undefined {
   const nextLocation = getNextLocation(map, guard)
 
   if (nextLocation === undefined) {
     return undefined
   }
 
-  return maybeTurn(map, { ...nextLocation, value: guard.value })
+  const { x, y, value } = nextLocation
+  if (value !== obstruction) {
+    return { ...guard, x, y }
+  }
+
+  return turn(guard)
 }
 
-function getNextLocation(map: Map, { x, y, value }: Guard): Location | undefined {
+function getNextLocation(map: Map<string, Location>, { x, y, value }: Guard): Location | undefined {
   switch (value) {
     case '<':
-      return getMapLocation(map, x - 1, y)
+      return getMapLocation(map, { x: x - 1, y: y })
     case '>':
-      return getMapLocation(map, x + 1, y)
+      return getMapLocation(map, { x: x + 1, y: y })
     case '^':
-      return getMapLocation(map, x, y - 1)
+      return getMapLocation(map, { x: x, y: y - 1 })
     case 'v':
-      return getMapLocation(map, x, y + 1)
+      return getMapLocation(map, { x: x, y: y + 1 })
     default:
       return value satisfies never
   }
 }
 
-function maybeTurn(map: Map, guard: Guard): Guard {
-  const nextLocation = getNextLocation(map, guard)
-
-  if (nextLocation?.value !== obstruction) {
-    return guard
-  }
-
+function turn(guard: Guard): Guard {
   switch (guard.value) {
     case '<':
       return { ...guard, value: '^' }
@@ -166,4 +117,24 @@ function maybeTurn(map: Map, guard: Guard): Guard {
     default:
       return guard.value satisfies never
   }
+}
+
+function getGuardKey(guard?: Guard): string {
+  if (!guard) {
+    throw new Error('Invalid Guard in History')
+  }
+
+  const { x, y, value } = guard
+
+  return JSON.stringify({ x, y, value })
+}
+
+function getLocationKey(location?: Pick<Location, 'x' | 'y'>): string {
+  if (!location) {
+    throw new Error('Invalid Guard in History')
+  }
+
+  const { x, y } = location
+
+  return JSON.stringify({ x, y })
 }

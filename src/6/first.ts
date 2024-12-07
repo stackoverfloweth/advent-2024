@@ -1,5 +1,5 @@
-type Location = { x: number, y: number, value: string, obstructed: boolean }
-type Map = Location[][]
+type Location = { x: number, y: number, value: string }
+type Map = Location[]
 const obstruction = '#'
 const guard = ['^', '>', 'v', '<'] as const
 type Guard = Location & { value: typeof guard[number] }
@@ -18,20 +18,13 @@ export function solve(input: string): unknown {
 }
 
 function getMap(input: string): Map {
-  return input.split('\n').map((line, y) => line.split('').map((value, x) => {
-    const obstructed = value === obstruction
-
-    return { x, y, value, obstructed }
+  return input.split('\n').flatMap((line, y) => line.split('').map((value, x) => {
+    return { x, y, value }
   }))
 }
 
 function getMapLocation(map: Map, x: number, y: number): Location | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (map[y] === undefined) {
-    return undefined
-  }
-
-  return map[y][x]
+  return map.find((location) => location.x === x && location.y === y)
 }
 
 function isGuard(location: Location): location is Guard {
@@ -57,7 +50,12 @@ function step(map: Map, guard: Guard): Guard | undefined {
     return undefined
   }
 
-  return maybeTurn(map, { ...nextLocation, value: guard.value })
+  const { x, y, value } = nextLocation
+  if (value === obstruction) {
+    return step(map, turn(guard))
+  }
+
+  return { ...guard, x, y }
 }
 
 function getNextLocation(map: Map, { x, y, value }: Guard): Location | undefined {
@@ -75,13 +73,7 @@ function getNextLocation(map: Map, { x, y, value }: Guard): Location | undefined
   }
 }
 
-function maybeTurn(map: Map, guard: Guard): Guard {
-  const nextLocation = getNextLocation(map, guard)
-
-  if (nextLocation?.value !== obstruction) {
-    return guard
-  }
-
+function turn(guard: Guard): Guard {
   switch (guard.value) {
     case '<':
       return { ...guard, value: '^' }
