@@ -11,7 +11,7 @@ class LoopError extends Error {
   }
 }
 
-export function solve(input: string): unknown {
+export function solve(input: string): number {
   const map = getMap(input)
   const visited = exploreMap(map)
 

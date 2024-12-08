@@ -1,4 +1,4 @@
-export function solve(input: string): unknown {
+export function solve(input: string): number {
   const reports = getReports(input)
 
   return reports.reduce((sum, report) => {

@@ -1,4 +1,4 @@
-export function solve(input: string): unknown {
+export function solve(input: string): number {
   const instructions = parse(input)
 
   let enabled = true

@@ -4,7 +4,7 @@ const obstruction = '#'
 const guard = ['^', '>', 'v', '<'] as const
 type Guard = Location & { value: typeof guard[number] }
 
-export function solve(input: string): unknown {
+export function solve(input: string): number {
   const locationsVisited = new Set<string>()
   const map = getMap(input)
   let guard: Guard | undefined = findGuard(map)
