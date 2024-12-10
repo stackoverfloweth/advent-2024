@@ -67,7 +67,7 @@ function compactDisk(disk: Memory[]): Memory[] {
 }
 
 function removeEmptyMemory(disk: Memory[]): Memory[] {
-  return disk.reduce<Memory[]>((clean, memory, index) => {
+  return disk.reduce<Memory[]>((clean, memory) => {
     if (memory.size < 0) {
       throw new Error('Invalid Memory Size!')
     }
@@ -127,19 +127,28 @@ function isEmptySpace(memory: Memory): memory is EmptySpace {
 }
 
 function calculateChecksum(disk: Memory[]): number {
-  let index = 0
+  const split = splitDisk(disk)
 
-  return disk.reduce((checksum, memory) => {
-    if (isEmptySpace(memory)) {
-      return checksum
+  console.log({ split })
+
+  return split.reduce((sum, id, index) => {
+    return sum + id * index
+  }, 0)
+}
+
+function splitDisk(disk: Memory[]): number[] {
+  return disk.reduce<number[]>((split, memory) => {
+    if (memory.id !== undefined) {
+      split.push(...new Array(memory.size).fill(memory.id))
     }
 
-    const start = index
-    const end = index + memory.size
+    return split
+  }, [])
+}
 
-    checksum += (end * (end - 1) / 2 - start * (start - 1) / 2) * memory.id
-    index = end
-
-    return checksum
-  }, 0)
+function printDisk(disk: Memory[]): void {
+  console.log(disk.reduce((printed, memory) => {
+    const id = memory.id ?? '.'
+    return printed + String(id).repeat(memory.size)
+  }, ''))
 }
