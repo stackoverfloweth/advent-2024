@@ -2,7 +2,6 @@ export function solve(input: string): number {
   const disk = readDisk(input.split('').map(Number))
   const compacted = compactDisk(disk)
 
-  printDisk(compacted)
   const checksum = calculateChecksum(compacted)
 
   return checksum
@@ -71,17 +70,8 @@ function isEmptySpace(memory: Memory): memory is EmptySpace {
   return memory.id === undefined
 }
 
-function printDisk(disk: Memory[]): void {
-  console.log(disk.map((x) => {
-    const id = x.id ?? '.'
-    return String(id).repeat(x.size)
-  }).join(''))
-}
-
 function calculateChecksum(disk: Memory[]): number {
   const split = splitDisk(disk)
-
-  console.log({ split })
 
   return split.reduce<number>((sum, id, index) => {
     if (id === undefined) {

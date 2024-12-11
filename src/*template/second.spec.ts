@@ -7,7 +7,7 @@ test('given test input, always return X', () => {
 
   const result = solve(input)
 
-  expect(result).toBe(input)
+  expect(result).toBe(input.length)
 })
 
 test.skip('given actual input, always return Y', () => {
@@ -15,5 +15,5 @@ test.skip('given actual input, always return Y', () => {
 
   const result = solve(input)
 
-  expect(result).toBe(input)
+  expect(result).toBe(input.length)
 })

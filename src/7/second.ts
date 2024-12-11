@@ -1,7 +1,7 @@
 type Possibility = { value: number, operation: '+' | '*' | '||' | null }[]
 type Equation = { solution: number, possibilities: Possibility[] }
 
-export function solve(input: string): unknown {
+export function solve(input: string): number {
   const equations = getEquations(input)
 
   return equations.reduce((sum, equation) => {

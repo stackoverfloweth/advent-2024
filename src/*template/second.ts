@@ -1,3 +1,3 @@
-export function solve(input: string): unknown {
-  return input
+export function solve(input: string): number {
+  return input.length
 }
